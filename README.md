@@ -3,7 +3,7 @@
 این مخزن شامل آرشیو منبع اندروید و گردش‌کار انتشار است.
 
 ## فایل‌ها
-- `Haftomyar_Source.tar.xz`: منبع کامل پروژه Android Studio (کدها و مولد بانک محتوای اولیه).
+- `source-parts/part-00.b64` تا `part-16.b64`: قطعات آرشیو فشرده منبع Android Studio؛ workflow آن‌ها را خودکار به فایل xz تبدیل می‌کند.
 - `.github/workflows/publish.yml`: گردش‌کار ساخت APK و انتشار بسته‌های محتوا در GitHub Pages.
 
 ## انتشار خودکار
@@ -21,7 +21,7 @@
 `https://persianknight1979-bit.github.io/haftomyar/`
 
 ## ساخت محلی APK
-Android Studio، JDK 17، Android SDK Platform 35 و Python 3 را نصب کنید. آرشیو را استخراج و پوشه `grade7_companion` را در Android Studio باز کنید. اجرای `build-debug.bat` ابتدا محتوای اولیه را تولید و سپس APK را می‌سازد.
+برای بازیابی منبع از مخزن، در محیط Bash اجرا کنید: `cat source-parts/part-*.b64 | base64 -d > Haftomyar_Source.tar.xz && tar -xJf Haftomyar_Source.tar.xz`. سپس Android Studio، JDK 17، Android SDK Platform 35 و Python 3 را نصب کنید، پوشه `grade7_companion` را در Android Studio باز کنید و `build-debug.bat` را اجرا کنید.
 
 ## نکته درباره محتوا
 محتوای همراه، تألیفی و نمونه اولیه است و پیش از استفاده آموزشی عمومی باید توسط دبیران، با چاپ رسمی کتاب‌های همان سال تطبیق داده شود. این پروژه ادعای تأیید رسمی آموزش‌وپرورش ندارد.
