@@ -26,7 +26,7 @@ jobs:
 
       - name: Extract Android Studio source
         run: |
-          tar -xzf Haftomyar_Source.tar.gz
+          tar -xJf Haftomyar_Source.tar.xz
           test -f grade7_companion/app/src/main/AndroidManifest.xml
           test -f grade7_companion/tools/create_update_package.py
 
