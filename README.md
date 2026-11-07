@@ -3,7 +3,7 @@
 این مخزن شامل آرشیو منبع اندروید و گردش‌کار انتشار است.
 
 ## فایل‌ها
-- `Haftomyar_Source.tar.gz`: منبع کامل پروژه Android Studio (کدها و مولد بانک محتوای اولیه).
+- `Haftomyar_Source.tar.xz`: منبع کامل پروژه Android Studio (کدها و مولد بانک محتوای اولیه).
 - `.github/workflows/publish.yml`: گردش‌کار ساخت APK و انتشار بسته‌های محتوا در GitHub Pages.
 
 ## انتشار خودکار
