@@ -1,30 +1,40 @@
-# هفتم‌یار — راه‌اندازی مخزن و انتشار خودکار
+# هفتم‌یار — پروژه اندرویدی پایه هفتم
 
-این مخزن شامل آرشیو منبع اندروید و گردش‌کار انتشار است.
+این مخزن شامل منبع Android Studio، بانک محتوای تألیفی اولیه، و گردش‌کار ساخت و انتشار خودکار است.
 
-## فایل‌ها
-- `source-parts/part-00.b64` تا `part-16.b64`: قطعات آرشیو فشرده منبع Android Studio؛ workflow آن‌ها را خودکار به فایل xz تبدیل می‌کند.
-- `.github/workflows/publish.yml`: گردش‌کار ساخت APK و انتشار بسته‌های محتوا در GitHub Pages.
+## دریافت نسخه آزمایشی
+- [دانلود APK از آخرین Release](https://github.com/persianknight1979-bit/haftomyar/releases/latest)
+- [مشاهده اجرای GitHub Actions](https://github.com/persianknight1979-bit/haftomyar/actions)
 
-## انتشار خودکار
+## به‌روزرسانی خودکار محتوای درون برنامه
+محتوای جدید از شاخه `gh-pages` و از طریق HTTPS خام GitHub دریافت می‌شود؛ فعال‌سازی GitHub Pages لازم نیست.
+
+نشانی manifest:
+`https://raw.githubusercontent.com/persianknight1979-bit/haftomyar/gh-pages/haftomyar/manifest.json`
+
+هر بسته محتوا فایل نسخه‌دار JSON و SHA-256 دارد. اپ باید هش بسته را پیش از جایگزین‌کردن محتوای قبلی بررسی کند. workflow پیش از انتشار نیز هش را اعتبارسنجی می‌کند.
+
+## گردش‌کار انتشار
 با هر push به شاخه `main` یا اجرای دستی workflow:
-1. پروژه استخراج می‌شود.
-2. فایل‌های محتوایی آفلاین با Python تولید می‌شوند.
-3. بسته محتوای نسخه‌دار و manifest دارای SHA-256 ساخته می‌شود.
+1. آرشیو منبع Android Studio از قطعات داخل `source-parts` بازسازی می‌شود.
+2. بانک محتوای اولیه با Python تولید می‌شود.
+3. manifest و بسته نسخه‌دار همراه SHA-256 ساخته و اعتبارسنجی می‌شوند.
 4. APK دیباگ با Java 17 و Android SDK 35 ساخته می‌شود.
-5. APK و سرویس به‌روزرسانی محتوا در GitHub Pages منتشر می‌شوند.
+5. بسته محتوا در شاخه `gh-pages` منتشر می‌شود.
+6. APK به‌عنوان GitHub Actions artifact و نیز Release آزمایشی منتشر می‌شود.
 
-آدرس سرویس محتوا:
-`https://persianknight1979-bit.github.io/haftomyar/haftomyar/manifest.json`
-
-صفحه دانلود و وضعیت انتشار:
-`https://persianknight1979-bit.github.io/haftomyar/`
+فایل workflow:
+`.github/workflows/publish.yml`
 
 ## ساخت محلی APK
-برای بازیابی منبع از مخزن، در محیط Bash اجرا کنید: `cat source-parts/part-*.b64 | base64 -d > Haftomyar_Source.tar.xz && tar -xJf Haftomyar_Source.tar.xz`. سپس Android Studio، JDK 17، Android SDK Platform 35 و Python 3 را نصب کنید، پوشه `grade7_companion` را در Android Studio باز کنید و `build-debug.bat` را اجرا کنید.
+برای بازیابی منبع در محیط Bash اجرا کنید:
 
-## نکته درباره محتوا
-محتوای همراه، تألیفی و نمونه اولیه است و پیش از استفاده آموزشی عمومی باید توسط دبیران، با چاپ رسمی کتاب‌های همان سال تطبیق داده شود. این پروژه ادعای تأیید رسمی آموزش‌وپرورش ندارد.
+```bash
+cat source-parts/part-*.b64 | base64 -d > Haftomyar_Source.tar.xz
+tar -xJf Haftomyar_Source.tar.xz
+```
 
-## نوع APK
-Workflow فعلی APK از نوع debug می‌سازد که برای نصب و آزمایش مناسب است. انتشار عمومی و به‌روزرسانی خودکار خود برنامه (نه محتوای آموزشی) مستلزم کلید امضای release و فرایند توزیع جداگانه است.
+سپس Android Studio، JDK 17، Android SDK Platform 35 و Python 3 را نصب کنید، پوشه `grade7_companion` را باز کنید و `build-debug.bat` را اجرا کنید.
+
+## وضعیت و محدودیت‌ها
+APK فعلی از نوع **debug** و برای نصب و آزمایش است؛ نسخه انتشار عمومی با امضای release و کلید اختصاصی هنوز ساخته نشده است. محتوای موجود تألیفی و نمونه اولیه است و پیش از استفاده آموزشی عمومی باید توسط دبیران و با چاپ رسمی کتاب‌های همان سال بازبینی شود. این پروژه وابسته به آموزش‌وپرورش نیست و تأیید رسمی ندارد.
