@@ -1,0 +1,116 @@
+name: Build APK and publish Haftomyar updates
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: haftomyar-pages
+  cancel-in-progress: false
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Extract Android Studio project
+        run: |
+          unzip -q Haftomyar_1.1.0_GitHub_Publish_Kit.zip -d source
+          test -f source/grade7_companion/app/src/main/AndroidManifest.xml
+          test -f source/grade7_companion/tools/create_update_package.py
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Resolve update service URL
+        id: urls
+        shell: bash
+        run: |
+          OWNER="${GITHUB_REPOSITORY_OWNER}"
+          REPO="${GITHUB_REPOSITORY#*/}"
+          BASE="https://${OWNER}.github.io/${REPO}/haftomyar"
+          echo "base_url=${BASE}" >> "$GITHUB_OUTPUT"
+          echo "manifest_url=${BASE}/manifest.json" >> "$GITHUB_OUTPUT"
+
+      - name: Create versioned SHA-256 content package
+        working-directory: source/grade7_companion
+        run: |
+          VERSION=$((GITHUB_RUN_NUMBER + 1))
+          python tools/create_update_package.py \
+            --version "$VERSION" \
+            --min-app-version-code 2 \
+            --base-url '${{ steps.urls.outputs.base_url }}' \
+            --release-notes "به‌روزرسانی محتوای هفتم‌یار - انتشار $GITHUB_RUN_NUMBER" \
+            --output-dir docs/haftomyar
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          root = Path('docs/haftomyar')
+          manifest = json.loads((root / 'manifest.json').read_text(encoding='utf-8'))
+          content = (root / f"content-v{manifest['content_version']}.json").read_bytes()
+          assert hashlib.sha256(content).hexdigest() == manifest['sha256']
+          assert manifest['content_url'].startswith('https://')
+          print('Manifest and SHA-256 verification passed.')
+          PY
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        run: sdkmanager 'platform-tools' 'platforms;android-35' 'build-tools;35.0.0'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Build debug APK with update URL configured
+        working-directory: source/grade7_companion
+        shell: bash
+        run: |
+          gradle --no-daemon assembleDebug -PdefaultManifestUrl=' ${{ steps.urls.outputs.manifest_url }}'
+          mkdir -p docs/downloads
+          cp app/build/outputs/apk/debug/app-debug.apk docs/downloads/Haftomyar-debug.apk
+          printf '%s\n' '${{ steps.urls.outputs.manifest_url }}' > docs/downloads/update-manifest-url.txt
+
+      - name: Add Pages marker
+        working-directory: source/grade7_companion
+        run: touch docs/.nojekyll
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: source/grade7_companion/docs
+
+      - name: Deploy update service and download page
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Keep APK as a workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Haftomyar-Android-APK
+          path: source/grade7_companion/docs/downloads/Haftomyar-debug.apk
+          retention-days: 30
