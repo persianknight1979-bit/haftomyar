@@ -31,6 +31,9 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Apply developer identity and contact details
+        run: python ci/inject_developer_info.py grade7_companion
+
       - name: Generate offline educational assets
         working-directory: grade7_companion
         run: python build_content.py
