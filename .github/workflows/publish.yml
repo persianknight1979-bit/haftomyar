@@ -6,20 +6,15 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
-  group: haftomyar-pages
+  group: haftomyar-release
   cancel-in-progress: false
 
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -40,13 +35,11 @@ jobs:
         working-directory: grade7_companion
         run: python build_content.py
 
-      - name: Resolve HTTPS content URL
+      - name: Resolve raw HTTPS content URL
         id: urls
         shell: bash
         run: |
-          OWNER="${GITHUB_REPOSITORY_OWNER}"
-          REPO="${GITHUB_REPOSITORY#*/}"
-          BASE="https://${OWNER}.github.io/${REPO}/haftomyar"
+          BASE="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/gh-pages/haftomyar"
           echo "base_url=${BASE}" >> "$GITHUB_OUTPUT"
           echo "manifest_url=${BASE}/manifest.json" >> "$GITHUB_OUTPUT"
 
@@ -89,36 +82,40 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Build debug APK with the correct update endpoint
+      - name: Build debug APK with raw HTTPS update endpoint
         working-directory: grade7_companion
         shell: bash
         run: |
           gradle --no-daemon assembleDebug -PdefaultManifestUrl='${{ steps.urls.outputs.manifest_url }}'
+          test -s app/build/outputs/apk/debug/app-debug.apk
           mkdir -p docs/downloads
           cp app/build/outputs/apk/debug/app-debug.apk docs/downloads/Haftomyar-debug.apk
           printf '%s\n' '${{ steps.urls.outputs.manifest_url }}' > docs/downloads/update-manifest-url.txt
 
-      - name: Add Pages marker
-        working-directory: grade7_companion
-        run: touch docs/.nojekyll
-
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
+      - name: Publish content package to raw HTTPS branch
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          enablement: true
-
-      - name: Upload GitHub Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: grade7_companion/docs
-
-      - name: Deploy update service and APK download page
-        id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: grade7_companion/docs/haftomyar
+          destination_dir: haftomyar
+          keep_files: false
+          force_orphan: true
+          commit_message: "Publish Haftomyar content v${{ github.run_number }}"
 
       - name: Upload APK workflow artifact
         uses: actions/upload-artifact@v4
         with:
           name: Haftomyar-Android-APK
           path: grade7_companion/docs/downloads/Haftomyar-debug.apk
+          if-no-files-found: error
           retention-days: 30
+
+      - name: Publish APK as a GitHub prerelease
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: haftomyar-build-${{ github.run_number }}
+          name: "هفتم‌یار - نسخه آزمایشی ${{ github.run_number }}"
+          prerelease: true
+          generate_release_notes: true
+          files: grade7_companion/docs/downloads/Haftomyar-debug.apk
